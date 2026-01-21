@@ -8,7 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "deploy": "gh-pages -d dist -r https://github.com/jessisca20/react_task3.git"
+    "deploy": "gh-pages -d dist -r https://github.com/jessisca20/react_task4.git"
   },
   "dependencies": {
     "axios": "^1.13.2",
