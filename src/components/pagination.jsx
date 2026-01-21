@@ -1,7 +1,7 @@
-function Pagination({ pagination, onChangePage }) {
+function Pagination({ pagination, onChangepage }) {
   const handleClick = (e, page) => {
     e.preventDefault();
-    onChangePage(page);
+    onChangepage(page);
   };
 
   return (
@@ -23,20 +23,14 @@ function Pagination({ pagination, onChangePage }) {
             key={index}
           >
             <a
-              className="page-link"
-              href="#"
-              onClick={(e) => onChangePage(e, index + 1)}
+              className={`page-link ${index + 1 === pagination.current_page && "active"}`}
+              href="/"
+              onClick={(e) => handleClick(e, index + 1)}
             >
               {index + 1}
             </a>
           </li>
         ))}
-
-        <li className={`page-item ${!pagination.has_next && "disabled"}`}>
-          <a className="page-link" href="#" aria-label="Next">
-            <span aria-hidden="true">&raquo;</span>
-          </a>
-        </li>
         <li className={`page-item ${!pagination.has_next && "disabled"}`}>
           <a
             className="page-link"
