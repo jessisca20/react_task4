@@ -6,6 +6,7 @@ import "./assets/style.css";
 import "./App.css";
 import ProductModal from "./components/ProductModal";
 import Pagination from "./components/pagination";
+import Login from "./view/login";
 
 const INITIAL_TEMPLATE_DATA = {
   id: "",
@@ -86,129 +87,6 @@ function App() {
     }
   };
 
-  const updateProduct = async (id) => {
-    let apiUrl = `${url}/api/${apiPATH}/admin/product`;
-    let method = "post";
-
-    if (modalType === "edit") {
-      apiUrl = `${url}/api/${apiPATH}/admin/product/${id}`;
-      method = "put";
-    }
-
-    const productData = {
-      data: {
-        ...templateProduct,
-        origin_price: Number(templateProduct.origin_price),
-        price: Number(templateProduct.price),
-        is_enabled: templateProduct.is_enabled ? 1 : 0,
-        imagesUrl: [...templateProduct.imagesUrl.filter((url) => url !== "")],
-      },
-    };
-
-    try {
-      const res = await axios[method](apiUrl, productData);
-      console.log(res.data);
-      getData();
-      closeModal();
-    } catch (error) {
-      alert(error.response.data.message);
-    }
-  };
-
-  const deleteProduct = async (id) => {
-    console.log("delete id:", id);
-    console.log("delete url:", `${url}/api/${apiPATH}/admin/product/${id}`);
-    try {
-      const res = await axios.delete(
-        `${url}/api/${apiPATH}/admin/product/${id}`,
-      );
-      console.log(res.data);
-      getData();
-      closeModal();
-    } catch (error) {
-      alert(error.response.data.message);
-    }
-  };
-
-  const handleModalChange = (e) => {
-    const { name, value, checked, type } = e.target;
-    setTemplateProduct((preData) => ({
-      ...preData,
-      [name]: type === "checkbox" ? checked : value,
-    }));
-  };
-
-  const handleModalImageChange = (index, value) => {
-    setTemplateProduct((pre) => {
-      const newImages = [...pre.imagesUrl];
-      newImages[index] = value;
-
-      if (
-        value !== "" &&
-        index === newImages.length - 1 &&
-        newImages.length < 5
-      ) {
-        newImages.push("");
-      }
-
-      if (
-        newImages.length > 1 &&
-        newImages[newImages.length - 1] === "" &&
-        newImages[newImages.length - 2] === ""
-      ) {
-        newImages.pop();
-      }
-
-      return {
-        ...pre,
-        imagesUrl: newImages,
-      };
-    });
-  };
-
-  const uploadImage = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) {
-      return;
-    }
-    try {
-      const formData = new FormData();
-      formData.append("file-to-upload", file);
-      const res = await axios.post(
-        `${url}/api/${apiPATH}/admin/upload`,
-        formData,
-      );
-      setTemplateProduct((pre) => ({
-        ...pre,
-        imageUrl: res.data.imageUrl,
-      }));
-    } catch (err) {
-      console.log(err.response);
-    }
-  };
-
-  const handleAddImage = () => {
-    setTemplateProduct((pre) => {
-      const newImages = [...pre.imagesUrl];
-      newImages.push("");
-      return {
-        ...pre,
-        imagesUrl: newImages,
-      };
-    });
-  };
-
-  const handleRemoveImage = () => {
-    setTemplateProduct((pre) => {
-      const newImages = [...pre.imagesUrl];
-      newImages.pop("");
-      return {
-        ...pre,
-        imagesUrl: newImages,
-      };
-    });
-  };
-
   return (
     <>
       {isAuth ? (
@@ -287,14 +165,8 @@ function App() {
       <ProductModal
         modalType={modalType}
         templateProduct={templateProduct}
-        handleModalChange={handleModalChange}
-        handleModalImageChange={handleModalImageChange}
-        handleAddImage={handleAddImage}
-        handleRemoveImage={handleRemoveImage}
+        getData={getData}
         closeModal={closeModal}
-        updateProduct={updateProduct}
-        deleteProduct={deleteProduct}
-        uploadImage={uploadImage}
       />
     </>
   );
