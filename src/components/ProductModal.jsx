@@ -1,15 +1,139 @@
-function ProductModal({
-  modalType,
-  templateProduct,
-  handleModalChange,
-  handleModalImageChange,
-  handleAddImage,
-  handleRemoveImage,
-  closeModal,
-  updateProduct,
-  deleteProduct,
-  uploadImage,
-}) {
+import { useState, useEffect } from "react";
+import axios from "axios";
+
+const url = "https://ec-course-api.hexschool.io/v2";
+const apiPATH = "yuchen";
+
+function ProductModal({ modalType, templateProduct, getData, closeModal }) {
+  const [tempData, setTempData] = useState(templateProduct);
+
+  useEffect(() => {
+    setTempData(templateProduct);
+  }, [templateProduct]);
+
+  const handleModalChange = (e) => {
+    const { name, value, checked, type } = e.target;
+    setTempData((preData) => ({
+      ...preData,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  const handleModalImageChange = (index, value) => {
+    setTempData((pre) => {
+      const newImages = [...pre.imagesUrl];
+      newImages[index] = value;
+
+      if (
+        value !== "" &&
+        index === newImages.length - 1 &&
+        newImages.length < 5
+      ) {
+        newImages.push("");
+      }
+
+      if (
+        newImages.length > 1 &&
+        newImages[newImages.length - 1] === "" &&
+        newImages[newImages.length - 2] === ""
+      ) {
+        newImages.pop();
+      }
+
+      return {
+        ...pre,
+        imagesUrl: newImages,
+      };
+    });
+  };
+
+  const updateProduct = async (id) => {
+    let apiUrl = `${url}/api/${apiPATH}/admin/product`;
+    let method = "post";
+
+    if (modalType === "edit") {
+      apiUrl = `${url}/api/${apiPATH}/admin/product/${id}`;
+      method = "put";
+    }
+
+    const productData = {
+      data: {
+        ...templateProduct,
+        origin_price: Number(templateProduct.origin_price),
+        price: Number(templateProduct.price),
+        is_enabled: templateProduct.is_enabled ? 1 : 0,
+        imagesUrl: [...templateProduct.imagesUrl.filter((url) => url !== "")],
+      },
+    };
+
+    try {
+      const res = await axios[method](apiUrl, productData);
+      console.log(res.data);
+      getData();
+      closeModal();
+    } catch (error) {
+      alert(error.response.data.message);
+    }
+  };
+
+  const deleteProduct = async (id) => {
+    console.log("delete id:", id);
+    console.log("delete url:", `${url}/api/${apiPATH}/admin/product/${id}`);
+    try {
+      const res = await axios.delete(
+        `${url}/api/${apiPATH}/admin/product/${id}`,
+      );
+      console.log(res.data);
+      getData();
+      closeModal();
+    } catch (error) {
+      alert(error.response.data.message);
+    }
+  };
+
+  const uploadImage = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      return;
+    }
+    try {
+      const formData = new FormData();
+      formData.append("file-to-upload", file);
+      const res = await axios.post(
+        `${url}/api/${apiPATH}/admin/upload`,
+        formData,
+      );
+      setTemplateProduct((pre) => ({
+        ...pre,
+        imageUrl: res.data.imageUrl,
+      }));
+    } catch (err) {
+      console.log(err.response);
+    }
+  };
+
+  const handleAddImage = () => {
+    setTemplateProduct((pre) => {
+      const newImages = [...pre.imagesUrl];
+      newImages.push("");
+      return {
+        ...pre,
+        imagesUrl: newImages,
+      };
+    });
+  };
+
+  const handleRemoveImage = () => {
+    setTemplateProduct((pre) => {
+      const newImages = [...pre.imagesUrl];
+      newImages.pop("");
+      return {
+        ...pre,
+        imagesUrl: newImages,
+      };
+    });
+  };
+
   return (
     <div
       className="modal fade"
@@ -48,14 +172,14 @@ function ProductModal({
             {modalType === "delete" ? (
               <p className="fs-4">
                 確定要刪除
-                <span className="text-danger">{templateProduct.title}</span>
+                <span className="text-danger">{tempData.title}</span>
                 嗎？
               </p>
             ) : (
               <div className="row">
                 <div className="col-sm-4">
                   <div className="mb-2">
-                    {templateProduct.imagesUrl.map((url, index) => (
+                    {tempData.imagesUrl.map((url, index) => (
                       <div key={index}>
                         <div className="mb-3">
                           <label htmlFor="fileUpload" className="form-label">
@@ -101,23 +225,22 @@ function ProductModal({
                         name="imageUrl"
                         className="form-control"
                         placeholder="請輸入圖片連結"
-                        value={templateProduct.imageUrl}
+                        value={tempData.imageUrl}
                         onChange={(e) => handleModalChange(e)}
                       />
                     </div>
-                    {templateProduct.imageUrl && (
+                    {tempData.imageUrl && (
                       <img
                         className="img-fluid"
-                        src={templateProduct.imageUrl}
+                        src={tempData.imageUrl}
                         alt="主圖"
                       />
                     )}
                   </div>
                   <div>
-                    {templateProduct.imagesUrl.length < 5 &&
-                      templateProduct.imagesUrl[
-                        templateProduct.imagesUrl.length - 1
-                      ] !== "" && (
+                    {tempData.imagesUrl.length < 5 &&
+                      tempData.imagesUrl[tempData.imagesUrl.length - 1] !==
+                        "" && (
                         <button
                           className="btn btn-outline-primary btn-sm d-block w-100"
                           onClick={() => handleAddImage()}
@@ -128,7 +251,7 @@ function ProductModal({
                   </div>
 
                   <div>
-                    {templateProduct.imagesUrl.length >= 1 && (
+                    {tempData.imagesUrl.length >= 1 && (
                       <button
                         className="btn btn-outline-danger btn-sm d-block w-100"
                         onClick={() => handleRemoveImage()}
@@ -149,7 +272,7 @@ function ProductModal({
                       type="text"
                       className="form-control"
                       placeholder="請輸入標題"
-                      value={templateProduct.title}
+                      value={tempData.title}
                       onChange={(e) => handleModalChange(e)}
                     />
                   </div>
@@ -165,7 +288,7 @@ function ProductModal({
                         type="text"
                         className="form-control"
                         placeholder="請輸入分類"
-                        value={templateProduct.category}
+                        value={tempData.category}
                         onChange={(e) => handleModalChange(e)}
                       />
                     </div>
@@ -179,7 +302,7 @@ function ProductModal({
                         type="text"
                         className="form-control"
                         placeholder="請輸入單位"
-                        value={templateProduct.unit}
+                        value={tempData.unit}
                         onChange={(e) => handleModalChange(e)}
                       />
                     </div>
@@ -197,7 +320,7 @@ function ProductModal({
                         min="0"
                         className="form-control"
                         placeholder="請輸入原價"
-                        value={templateProduct.origin_price}
+                        value={tempData.origin_price}
                         onChange={(e) => handleModalChange(e)}
                       />
                     </div>
@@ -212,7 +335,7 @@ function ProductModal({
                         min="0"
                         className="form-control"
                         placeholder="請輸入售價"
-                        value={templateProduct.price}
+                        value={tempData.price}
                         onChange={(e) => handleModalChange(e)}
                       />
                     </div>
@@ -228,7 +351,7 @@ function ProductModal({
                       id="description"
                       className="form-control"
                       placeholder="請輸入產品描述"
-                      value={templateProduct.description}
+                      value={tempData.description}
                       onChange={(e) => handleModalChange(e)}
                     ></textarea>
                   </div>
@@ -241,7 +364,7 @@ function ProductModal({
                       id="content"
                       className="form-control"
                       placeholder="請輸入說明內容"
-                      value={templateProduct.content}
+                      value={tempData.content}
                       onChange={(e) => handleModalChange(e)}
                     ></textarea>
                   </div>
@@ -252,7 +375,7 @@ function ProductModal({
                         id="is_enabled"
                         className="form-check-input"
                         type="checkbox"
-                        checked={templateProduct.is_enabled}
+                        checked={tempData.is_enabled}
                         onChange={(e) => handleModalChange(e)}
                       />
                       <label className="form-check-label" htmlFor="is_enabled">
@@ -269,7 +392,7 @@ function ProductModal({
               <button
                 type="button"
                 className="btn btn-danger"
-                onClick={() => deleteProduct(templateProduct.id)}
+                onClick={() => deleteProduct(tempData.id)}
               >
                 刪除
               </button>
@@ -286,7 +409,7 @@ function ProductModal({
                 <button
                   type="button"
                   className="btn btn-primary"
-                  onClick={() => updateProduct(templateProduct.id)}
+                  onClick={() => updateProduct(tempData.id)}
                 >
                   確認
                 </button>
