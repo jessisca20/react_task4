@@ -12,6 +12,7 @@ function ProductModal({ modalType, templateProduct, getData, closeModal }) {
   }, [templateProduct]);
 
   const handleModalChange = (e) => {
+    console.log(e.target);
     const { name, value, checked, type } = e.target;
     setTempData((preData) => ({
       ...preData,
